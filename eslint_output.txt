@@ -1,0 +1,82 @@
+
+> cybercut@0.1.0 lint
+> eslint
+
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/agenda/page.tsx
+  120:109  error    Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+  181:33   warning  'di' is defined but never used                                          @typescript-eslint/no-unused-vars
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/clientes/page.tsx
+  64:109  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/financeiro/page.tsx
+  53:109  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/page.tsx
+  57:107  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/produtos/page.tsx
+  58:109  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/relatorios/page.tsx
+  34:107  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/(dashboard)/usuarios/page.tsx
+  39:109  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/layout.tsx
+  34:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/app/login/page.tsx
+  147:110  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/components/sidebar.tsx
+  110:110  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/components/ui/modal.tsx
+  20:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/components/ui/modal.tsx:20:7
+  18 |       requestAnimationFrame(() => setShow(true))
+  19 |     } else {
+> 20 |       setShow(false)
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  21 |     }
+  22 |   }, [open])
+  23 |  react-hooks/set-state-in-effect
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/lib/seed-data.ts
+  9:7  warning  'today' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/lib/store.tsx
+  119:21  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/lib/store.tsx:119:21
+  117 |   }, [supabase])
+  118 |
+> 119 |   useEffect(() => { fetchAll() }, [fetchAll])
+      |                     ^^^^^^^^ Avoid calling setState() directly within an effect
+  120 |
+  121 |   // ─── CRUD: Clientes ───
+  122 |   const addCliente = useCallback(async (c: Omit<Cliente, 'id' | 'created_at'>) => {  react-hooks/set-state-in-effect
+  173:41  warning  '_u' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  183:44  warning  '_id' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+
+/home/lf/Documentos/antigravity_projetos/cybercut/src/middleware.ts
+  16:48  warning  'options' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 17 problems (11 errors, 6 warnings)
+
