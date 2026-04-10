@@ -24,10 +24,10 @@ export function getSeedData() {
   ]
 
   const clientes: Cliente[] = [
-    { id: 'c1', nome: 'Rafael Souza', telefone: '(11) 99123-4567', email: 'rafael@email.com', cpf: '444.444.444-44', nascimento: '1990-05-15', tipo: 'VIP', endereco: 'Rua A, 123', observacoes: 'Prefere corte degradê', created_at: '2025-03-10' },
-    { id: 'c2', nome: 'Lucas Ferreira', telefone: '(11) 99234-5678', email: '', cpf: '', nascimento: '', tipo: 'Regular', endereco: '', observacoes: '', created_at: '2025-03-15' },
-    { id: 'c3', nome: 'Bruno Costa', telefone: '(11) 99345-6789', email: 'bruno@email.com', cpf: '', nascimento: '', tipo: 'Regular', endereco: '', observacoes: 'Alergia a certos produtos', created_at: '2025-03-20' },
-    { id: 'c4', nome: 'Mateus Alves', telefone: '(11) 98888-7654', email: 'mateus@email.com', cpf: '', nascimento: '', tipo: 'Novo', endereco: '', observacoes: '', created_at: '2025-03-25' },
+    { id: 'c1', nome: 'Rafael Souza', telefone: '(11) 99123-4567', email: 'rafael@email.com', cpf: '444.444.444-44', nascimento: '1990-05-15', tipo: 'VIP', status: 'Ativo', endereco: 'Rua A, 123', observacoes: 'Prefere corte degradê', created_at: '2025-03-10' },
+    { id: 'c2', nome: 'Lucas Ferreira', telefone: '(11) 99234-5678', email: '', cpf: '', nascimento: '', tipo: 'Regular', status: 'Ativo', endereco: '', observacoes: '', created_at: '2025-03-15' },
+    { id: 'c3', nome: 'Bruno Costa', telefone: '(11) 99345-6789', email: 'bruno@email.com', cpf: '', nascimento: '', tipo: 'Regular', status: 'Ativo', endereco: '', observacoes: 'Alergia a certos produtos', created_at: '2025-03-20' },
+    { id: 'c4', nome: 'Mateus Alves', telefone: '(11) 98888-7654', email: 'mateus@email.com', cpf: '', nascimento: '', tipo: 'Novo', status: 'Ativo', endereco: '', observacoes: '', created_at: '2025-03-25' },
   ]
 
   const produtos: Produto[] = [
