@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { DM_Sans, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { StoreProvider } from "@/lib/store"
+import { ToastProvider } from "@/components/ui/toast"
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -37,9 +38,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full font-[family-name:var(--font-dm-sans)] noise">
-        <StoreProvider>
-          {children}
-        </StoreProvider>
+        <ToastProvider>
+          <StoreProvider>
+            {children}
+          </StoreProvider>
+        </ToastProvider>
       </body>
     </html>
   )

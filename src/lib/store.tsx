@@ -1,6 +1,7 @@
 'use client'
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/components/ui/toast'
 import type { Profile, Cliente, Produto, Transacao, Agendamento, Servico } from '@/lib/types'
 
 interface StoreState {
@@ -40,6 +41,8 @@ type Store = StoreState & StoreActions
 const StoreContext = createContext<Store | null>(null)
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const toast = useToast()
+  
   const [state, setState] = useState<StoreState>({
     usuarios: [],
     clientes: [],
@@ -126,54 +129,62 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // ─── CRUD: Clientes ───
   const addCliente = useCallback(async (c: Omit<Cliente, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('clientes').insert(c).select().single()
-    if (!error && data) setState(prev => ({ ...prev, clientes: [{ ...data, id: String(data.id), email: data.email||'', cpf: data.cpf||'', nascimento: data.nascimento||'', endereco: data.endereco||'', observacoes: data.observacoes||'', status: data.status||'Ativo' }, ...prev.clientes] }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    if (data) setState(prev => ({ ...prev, clientes: [{ ...data, id: String(data.id), email: data.email||'', cpf: data.cpf||'', nascimento: data.nascimento||'', endereco: data.endereco||'', observacoes: data.observacoes||'', status: data.status||'Ativo' }, ...prev.clientes] }))
+  }, [supabase, toast])
 
   const updateCliente = useCallback(async (c: Cliente) => {
     const { id, ...rest } = c
     const { error } = await supabase.from('clientes').update(rest).eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, clientes: prev.clientes.map(x => x.id === id ? c : x) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, clientes: prev.clientes.map(x => x.id === id ? c : x) }))
+  }, [supabase, toast])
 
   const deleteCliente = useCallback(async (id: string) => {
     const { error } = await supabase.from('clientes').delete().eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, clientes: prev.clientes.filter(x => x.id !== id) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, clientes: prev.clientes.filter(x => x.id !== id) }))
+  }, [supabase, toast])
 
   // ─── CRUD: Produtos ───
   const addProduto = useCallback(async (p: Omit<Produto, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('produtos').insert(p).select().single()
-    if (!error && data) setState(prev => ({ ...prev, produtos: [{ ...data, id: String(data.id), preco: Number(data.preco), descricao: data.descricao||'', emoji: data.emoji||'📦', marca: data.marca||'', sku: data.sku||'' }, ...prev.produtos] }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    if (data) setState(prev => ({ ...prev, produtos: [{ ...data, id: String(data.id), preco: Number(data.preco), descricao: data.descricao||'', emoji: data.emoji||'📦', marca: data.marca||'', sku: data.sku||'' }, ...prev.produtos] }))
+  }, [supabase, toast])
 
   const updateProduto = useCallback(async (p: Produto) => {
     const { id, ...rest } = p
     const { error } = await supabase.from('produtos').update(rest).eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, produtos: prev.produtos.map(x => x.id === id ? p : x) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, produtos: prev.produtos.map(x => x.id === id ? p : x) }))
+  }, [supabase, toast])
 
   const deleteProduto = useCallback(async (id: string) => {
     const { error } = await supabase.from('produtos').delete().eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, produtos: prev.produtos.filter(x => x.id !== id) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, produtos: prev.produtos.filter(x => x.id !== id) }))
+  }, [supabase, toast])
 
   // ─── CRUD: Transacoes ───
   const addTransacao = useCallback(async (t: Omit<Transacao, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('transacoes').insert(t).select().single()
-    if (error) { console.error('Erro addTransacao:', error) }
-    if (!error && data) setState(prev => ({ ...prev, transacoes: [{ ...data, id: String(data.id), valor: Number(data.valor), observacoes: data.observacoes||'', created_at: data.created_at || new Date().toISOString() }, ...prev.transacoes] }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    if (data) setState(prev => ({ ...prev, transacoes: [{ ...data, id: String(data.id), valor: Number(data.valor), observacoes: data.observacoes||'', created_at: data.created_at || new Date().toISOString() }, ...prev.transacoes] }))
+  }, [supabase, toast])
 
   const updateTransacao = useCallback(async (t: Transacao) => {
     const { id, ...rest } = t
     const { error } = await supabase.from('transacoes').update(rest).eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, transacoes: prev.transacoes.map(x => x.id === id ? t : x) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, transacoes: prev.transacoes.map(x => x.id === id ? t : x) }))
+  }, [supabase, toast])
 
   const deleteTransacao = useCallback(async (id: string) => {
     const { error } = await supabase.from('transacoes').delete().eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, transacoes: prev.transacoes.filter(x => x.id !== id) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, transacoes: prev.transacoes.filter(x => x.id !== id) }))
+  }, [supabase, toast])
 
   // ─── CRUD: Usuarios (profiles) ───
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -184,8 +195,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const updateUsuario = useCallback(async (u: Profile) => {
     const { id, ...rest } = u
     const { error } = await supabase.from('profiles').update(rest).eq('id', id)
-    if (!error) setState(prev => ({ ...prev, usuarios: prev.usuarios.map(x => x.id === id ? u : x) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, usuarios: prev.usuarios.map(x => x.id === id ? u : x) }))
+  }, [supabase, toast])
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const deleteUsuario = useCallback(async (_id: string) => {
@@ -206,7 +218,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.from('agendamentos').insert(row).select(`
       *, clientes(id, nome), servicos(id, nome, duracao_min, preco, cor)
     `).single()
-    if (!error && data) {
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    if (data) {
       const cl = data.clientes as Record<string, unknown> | null
       const sv = data.servicos as Record<string, unknown> | null
       const mapped: Agendamento = {
@@ -228,7 +241,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       setState(prev => ({ ...prev, agendamentos: [mapped, ...prev.agendamentos] }))
     }
-  }, [supabase])
+  }, [supabase, toast])
 
   const updateAgendamento = useCallback(async (a: Agendamento) => {
     const row = {
@@ -241,30 +254,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       observacoes: a.observacoes,
     }
     const { error } = await supabase.from('agendamentos').update(row).eq('id', Number(a.id))
-    if (!error) setState(prev => ({ ...prev, agendamentos: prev.agendamentos.map(x => x.id === a.id ? a : x) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, agendamentos: prev.agendamentos.map(x => x.id === a.id ? a : x) }))
+  }, [supabase, toast])
 
   const deleteAgendamento = useCallback(async (id: string) => {
     const { error } = await supabase.from('agendamentos').delete().eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, agendamentos: prev.agendamentos.filter(x => x.id !== id) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, agendamentos: prev.agendamentos.filter(x => x.id !== id) }))
+  }, [supabase, toast])
 
   // ─── CRUD: Servicos ───
   const addServico = useCallback(async (s: Omit<Servico, 'id'>) => {
     const { data, error } = await supabase.from('servicos').insert(s).select().single()
-    if (!error && data) setState(prev => ({ ...prev, servicos: [...prev.servicos, { ...data, id: String(data.id), preco: Number(data.preco) }] }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    if (data) setState(prev => ({ ...prev, servicos: [...prev.servicos, { ...data, id: String(data.id), preco: Number(data.preco) }] }))
+  }, [supabase, toast])
 
   const updateServico = useCallback(async (s: Servico) => {
     const { id, ...rest } = s
     const { error } = await supabase.from('servicos').update(rest).eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, servicos: prev.servicos.map(x => x.id === id ? s : x) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, servicos: prev.servicos.map(x => x.id === id ? s : x) }))
+  }, [supabase, toast])
 
   const deleteServico = useCallback(async (id: string) => {
     const { error } = await supabase.from('servicos').delete().eq('id', Number(id))
-    if (!error) setState(prev => ({ ...prev, servicos: prev.servicos.filter(x => x.id !== id) }))
-  }, [supabase])
+    if (error) { toast(`Erro Supabase: ${error.message}`, 'er'); throw error; }
+    setState(prev => ({ ...prev, servicos: prev.servicos.filter(x => x.id !== id) }))
+  }, [supabase, toast])
 
   const value: Store = {
     ...state,
