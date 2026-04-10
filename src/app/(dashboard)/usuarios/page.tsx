@@ -19,6 +19,10 @@ export default function UsuariosPage() {
   const [editing, setEditing] = useState<Profile | null>(null)
   const [form, setForm] = useState({ nome: '', login: '', email: '', telefone: '', cpf: '', perfil: '', senha: '' })
 
+  const [comissaoOpen, setComissaoOpen] = useState(false)
+  const [comissaoUser, setComissaoUser] = useState<Profile | null>(null)
+  const [comissaoPercent, setComissaoPercent] = useState(50)
+
   function openNew() { setEditing(null); setForm({ nome: '', login: '', email: '', telefone: '', cpf: '', perfil: '', senha: '' }); setModalOpen(true) }
   function openEdit(u: Profile) { setEditing(u); setForm({ nome: u.nome, login: u.login, email: u.email, telefone: u.telefone, cpf: u.cpf, perfil: u.perfil, senha: '' }); setModalOpen(true) }
   async function save() {
@@ -28,6 +32,12 @@ export default function UsuariosPage() {
     setModalOpen(false)
   }
   async function toggleStatus(u: Profile) { await store.updateUsuario({ ...u, status: u.status === 'Ativo' ? 'Inativo' : 'Ativo' }); toast(`Usuário ${u.status === 'Ativo' ? 'desativado' : 'ativado'}`) }
+
+  function openComissao(u: Profile) {
+    setComissaoUser(u)
+    setComissaoPercent(50)
+    setComissaoOpen(true)
+  }
 
   const inits = (n: string) => n.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
@@ -72,7 +82,12 @@ export default function UsuariosPage() {
                     </button>
                   </td>
                   <td className="px-4 py-4">
-                    <button onClick={() => openEdit(u)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyber-cyan bg-cyber-cyan/8 border border-cyber-cyan/15 hover:bg-cyber-cyan/15 transition-all">✎ Editar</button>
+                    <div className="flex gap-2">
+                      {u.perfil === 'Barbeiro' && (
+                        <button onClick={() => openComissao(u)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyber-purple bg-cyber-purple/8 border border-cyber-purple/15 hover:bg-cyber-purple/15 transition-all">💰 Comissão</button>
+                      )}
+                      <button onClick={() => openEdit(u)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-cyber-cyan bg-cyber-cyan/8 border border-cyber-cyan/15 hover:bg-cyber-cyan/15 transition-all">✎ Editar</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -109,6 +124,53 @@ export default function UsuariosPage() {
             </select>
           </div>
         </div>
+      </Modal>
+
+      {/* Comissão Modal */}
+      <Modal open={comissaoOpen} onClose={() => setComissaoOpen(false)} title={`Comissões: ${comissaoUser?.nome || ''}`}
+        footer={<button onClick={() => setComissaoOpen(false)} className="px-5 py-2 rounded-lg bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 text-sm font-bold mx-auto w-full transition-all hover:bg-cyber-cyan/20">Aprovar / Fechar Relatório</button>}
+      >
+        {comissaoUser && (() => {
+          const cortesMensais = store.agendamentos.filter(a => a.barbeiro_id === comissaoUser.id && a.status === 'Confirmado' && new Date(a.data).getMonth() === new Date().getMonth())
+          const faturamentoTotal = cortesMensais.reduce((acc, curr) => acc + curr.preco, 0)
+          const comissaoReceber = faturamentoTotal * (comissaoPercent / 100)
+          const lucroCasa = faturamentoTotal - comissaoReceber
+          const fmtM = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`
+
+          return (
+            <div className="space-y-6">
+              <div className="flex gap-4 p-4 glass rounded-[10px] items-center">
+                <div className="flex-1">
+                  <div className="font-[family-name:var(--font-jetbrains)] text-[10px] tracking-[2px] uppercase text-tx-3 mb-1">Mês Corrente</div>
+                  <div className="text-xl font-bold text-tx-1">{cortesMensais.length} cortes realizados</div>
+                </div>
+                <div className="flex-1 text-right">
+                  <div className="font-[family-name:var(--font-jetbrains)] text-[10px] tracking-[2px] uppercase text-tx-3 mb-1">Gerado (Total)</div>
+                  <div className="text-xl font-bold text-cyber-green">{fmtM(faturamentoTotal)}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <label className="font-[family-name:var(--font-jetbrains)] text-[10px] tracking-[2px] uppercase text-tx-3 block">Taxa de Comissão do Perfil</label>
+                  <span className="font-bold text-tx-1 text-lg">{comissaoPercent}%</span>
+                </div>
+                <input type="range" min="0" max="100" value={comissaoPercent} onChange={(e) => setComissaoPercent(Number(e.target.value))} className="w-full accent-cyber-purple cursor-pointer" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass rounded-[10px] border border-cyber-purple/20 bg-cyber-purple/5 p-4 text-center">
+                  <div className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] text-cyber-purple/80 uppercase mb-2">A Receber (Profissional)</div>
+                  <div className="text-2xl font-black text-cyber-purple">{fmtM(comissaoReceber)}</div>
+                </div>
+                <div className="glass rounded-[10px] border border-cyber-cyan/20 bg-cyber-cyan/5 p-4 text-center">
+                  <div className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] text-cyber-cyan/80 uppercase mb-2">Lucro Líquido (Casa)</div>
+                  <div className="text-2xl font-black text-cyber-cyan">{fmtM(lucroCasa)}</div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </Modal>
     </div>
   )

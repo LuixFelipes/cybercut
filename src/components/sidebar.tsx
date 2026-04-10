@@ -14,6 +14,7 @@ const navItems = [
   { href: '/produtos', icon: '🧴', label: 'Produtos', countKey: 'produtos' as const },
   { section: 'Operacional' },
   { href: '/agenda', icon: '📅', label: 'Agenda', countKey: 'agendamentos' as const, countFilter: 'today' as const },
+  { href: '/servicos', icon: '✂️', label: 'Serviços', countKey: 'servicos' as const },
   { section: 'Financeiro' },
   { href: '/financeiro', icon: '💰', label: 'Caixa' },
   { href: '/relatorios', icon: '📊', label: 'Relatórios' },

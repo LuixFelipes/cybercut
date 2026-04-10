@@ -19,6 +19,8 @@ export default function DashboardPage() {
   const saldo = entradas - saidas
   const todayStr = now.toISOString().split('T')[0]
   const agHoje = agendamentos.filter(a => a.data === todayStr && a.status !== 'Cancelado')
+  const cortesRealizadosHoje = agHoje.filter(a => a.status === 'Confirmado')
+  const faturamentoCortesHoje = cortesRealizadosHoje.reduce((sum, a) => sum + a.preco, 0)
   const fmtM = (v: number) => 'R$ ' + v.toFixed(2).replace('.', ',')
   const fmtShort = (v: number) => {
     if (Math.abs(v) >= 1000) return 'R$' + (v / 1000).toFixed(1).replace('.', ',') + 'k'
@@ -132,6 +134,18 @@ export default function DashboardPage() {
             <div className="glass rounded-[10px] p-4 text-center">
               <div className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] text-tx-3 uppercase mb-2">Agendamentos Hoje</div>
               <div className="font-[family-name:var(--font-jetbrains)] text-lg font-bold text-cyber-cyan">{agHoje.length}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="glass rounded-[10px] p-4 text-center border border-cyber-green/20 bg-cyber-green/5">
+              <div className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] text-cyber-green/80 uppercase mb-2">Faturamento (Cortes) Hoje</div>
+              <div className="font-[family-name:var(--font-jetbrains)] text-xl font-bold text-cyber-green flex items-center justify-center gap-2">
+                 {fmtM(faturamentoCortesHoje)}
+              </div>
+            </div>
+            <div className="glass rounded-[10px] p-4 text-center border border-cyber-cyan/20 bg-cyber-cyan/5">
+              <div className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] text-cyber-cyan/80 uppercase mb-2">Cortes Concluídos Hoje</div>
+              <div className="font-[family-name:var(--font-jetbrains)] text-xl font-bold text-cyber-cyan">{cortesRealizadosHoje.length}</div>
             </div>
           </div>
           <div className="text-center mt-3">

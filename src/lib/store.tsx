@@ -29,6 +29,9 @@ interface StoreActions {
   addAgendamento: (a: Omit<Agendamento, 'id' | 'created_at'>) => Promise<void>
   updateAgendamento: (a: Agendamento) => Promise<void>
   deleteAgendamento: (id: string) => Promise<void>
+  addServico: (s: Omit<Servico, 'id'>) => Promise<void>
+  updateServico: (s: Servico) => Promise<void>
+  deleteServico: (id: string) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -245,6 +248,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!error) setState(prev => ({ ...prev, agendamentos: prev.agendamentos.filter(x => x.id !== id) }))
   }, [supabase])
 
+  // ─── CRUD: Servicos ───
+  const addServico = useCallback(async (s: Omit<Servico, 'id'>) => {
+    const { data, error } = await supabase.from('servicos').insert(s).select().single()
+    if (!error && data) setState(prev => ({ ...prev, servicos: [...prev.servicos, { ...data, id: String(data.id), preco: Number(data.preco) }] }))
+  }, [supabase])
+
+  const updateServico = useCallback(async (s: Servico) => {
+    const { id, ...rest } = s
+    const { error } = await supabase.from('servicos').update(rest).eq('id', Number(id))
+    if (!error) setState(prev => ({ ...prev, servicos: prev.servicos.map(x => x.id === id ? s : x) }))
+  }, [supabase])
+
+  const deleteServico = useCallback(async (id: string) => {
+    const { error } = await supabase.from('servicos').delete().eq('id', Number(id))
+    if (!error) setState(prev => ({ ...prev, servicos: prev.servicos.filter(x => x.id !== id) }))
+  }, [supabase])
+
   const value: Store = {
     ...state,
     addCliente, updateCliente, deleteCliente,
@@ -252,6 +272,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addUsuario, updateUsuario, deleteUsuario,
     addTransacao, updateTransacao, deleteTransacao,
     addAgendamento, updateAgendamento, deleteAgendamento,
+    addServico, updateServico, deleteServico,
     refresh: fetchAll,
   }
 
