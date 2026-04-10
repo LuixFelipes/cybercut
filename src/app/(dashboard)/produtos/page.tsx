@@ -17,6 +17,9 @@ export default function ProdutosPage() {
   const [editing, setEditing] = useState<Produto | null>(null)
   const [form, setForm] = useState({ nome: '', categoria: '', preco: '', estoque: '', estoque_minimo: '', unidade: 'un', marca: '', sku: '', descricao: '' })
 
+  const [vendaOpen, setVendaOpen] = useState(false)
+  const [formVenda, setFormVenda] = useState({ produto_id: '', cliente_id: '', qtd: 1, valor_pago: 0, pagamento: 'Pix' })
+
   const filtered = store.produtos.filter(p => {
     const matchSearch = !search || p.nome.toLowerCase().includes(search.toLowerCase())
     const matchCat = !filterCat || p.categoria === filterCat
@@ -48,6 +51,47 @@ export default function ProdutosPage() {
   }
   async function del(id: string) { if (confirm('Excluir?')) { await store.deleteProduto(id); toast('Produto removido', 'info') } }
 
+  function openVenda() {
+    setFormVenda({ produto_id: '', cliente_id: '', qtd: 1, valor_pago: 0, pagamento: 'Pix' })
+    setVendaOpen(true)
+  }
+
+  function handleProdutoVendaChange(id: string) {
+    const p = store.produtos.find(x => x.id === id)
+    if (p) setFormVenda(prev => ({ ...prev, produto_id: id, valor_pago: p.preco * prev.qtd }))
+    else setFormVenda(prev => ({ ...prev, produto_id: '' }))
+  }
+
+  function handleQtdChange(qtd: number) {
+    const p = store.produtos.find(x => x.id === formVenda.produto_id)
+    setFormVenda(prev => ({ ...prev, qtd, valor_pago: p ? p.preco * qtd : 0 }))
+  }
+
+  async function saveVenda() {
+    const p = store.produtos.find(x => x.id === formVenda.produto_id)
+    if (!p) return toast('Selecione um produto', 'er')
+    if (formVenda.qtd <= 0 || formVenda.qtd > p.estoque) return toast('Quantidade inválida ou produto sem estoque suficiente', 'er')
+
+    const c = store.clientes.find(x => x.id === formVenda.cliente_id)
+
+    // Subtrair Estoque
+    await store.updateProduto({ ...p, estoque: p.estoque - formVenda.qtd })
+    
+    // Adicionar Venda ao Caixa
+    await store.addTransacao({
+      descricao: `Venda: ${p.nome} x${formVenda.qtd}${c ? ` para ${c.nome}` : ''}`,
+      valor: formVenda.valor_pago,
+      data: new Date().toISOString().split('T')[0],
+      categoria: 'Produto',
+      tipo: 'entrada',
+      pagamento: formVenda.pagamento,
+      observacoes: 'Venda Rápida (PDV)'
+    })
+
+    toast('Venda e Receita gerada com sucesso! 💸')
+    setVendaOpen(false)
+  }
+
   return (
     <div className="animate-fade-up space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -57,7 +101,10 @@ export default function ProdutosPage() {
           </h1>
           <p className="font-[family-name:var(--font-jetbrains)] text-[11px] text-tx-3 tracking-wider mt-1">{"// catálogo de produtos"}</p>
         </div>
-        <button onClick={openNew} className="px-5 py-2.5 rounded-[10px] bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 font-bold text-sm hover:bg-cyber-cyan/20 transition-all">＋ Novo Produto</button>
+        <div className="flex gap-3">
+          <button onClick={openVenda} className="px-5 py-2.5 rounded-[10px] bg-cyber-green/10 text-cyber-green border border-cyber-green/20 font-bold text-sm hover:bg-cyber-green/20 transition-all shadow-[0_0_15px_rgba(50,215,75,0.15)]">🛒 Vender Produto</button>
+          <button onClick={openNew} className="px-5 py-2.5 rounded-[10px] bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 font-bold text-sm hover:bg-cyber-cyan/20 transition-all">＋ Novo</button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -160,6 +207,49 @@ export default function ProdutosPage() {
             <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Unidade</label>
             <select value={form.unidade} onChange={e => setForm(prev => ({ ...prev, unidade: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
               {['un', 'ml', 'g', 'L', 'kg'].map(u => <option key={u}>{u}</option>)}
+            </select>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={vendaOpen} onClose={() => setVendaOpen(false)} title="Venda Rápida de Balcão (PDV)"
+        footer={<>
+          <button onClick={() => setVendaOpen(false)} className="px-4 py-2 rounded-lg text-sm text-tx-3 hover:text-tx-1 transition-colors">Cancelar</button>
+          <button onClick={saveVenda} className="px-5 py-2 rounded-lg bg-cyber-green/10 text-cyber-green border border-cyber-green/20 text-sm font-bold hover:bg-cyber-green/20 transition-all">💵 Concluir Venda</button>
+        </>}
+      >
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Qual Produto? *</label>
+            <select value={formVenda.produto_id} onChange={e => handleProdutoVendaChange(e.target.value)} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer border border-cyber-cyan/10">
+              <option value="">Selecione no catálogo...</option>
+              {store.produtos.filter(p => p.estoque > 0).map(p => <option key={p.id} value={p.id}>{p.emoji} {p.nome} — R${p.preco} (Temos {p.estoque} em estoque)</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Quantidade (un) *</label>
+              <input type="number" min="1" value={formVenda.qtd} onChange={e => handleQtdChange(parseInt(e.target.value) || 1)} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none" />
+            </div>
+            <div>
+              <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Valor Pagante (R$) *</label>
+              <input type="number" step="0.01" value={formVenda.valor_pago} onChange={e => setFormVenda(prev => ({ ...prev, valor_pago: parseFloat(e.target.value) || 0 }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-cyber-green font-bold shadow-inner focus:outline-none" title="Você pode alterar caso dê algum desconto" />
+            </div>
+          </div>
+          <div>
+            <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Cliente Vinculado (Opcional)</label>
+            <select value={formVenda.cliente_id} onChange={e => setFormVenda(prev => ({ ...prev, cliente_id: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
+              <option value="">Consumidor Final (Não Cadastrado)</option>
+              {store.clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Forma de Pagamento Recebida *</label>
+            <select value={formVenda.pagamento} onChange={e => setFormVenda(prev => ({ ...prev, pagamento: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer bg-cyber-green/[0.05] border-cyber-green/20">
+              <option>Pix</option>
+              <option>Cartão de Crédito</option>
+              <option>Cartão de Débito</option>
+              <option>Dinheiro</option>
             </select>
           </div>
         </div>
