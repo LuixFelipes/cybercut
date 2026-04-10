@@ -20,6 +20,7 @@ export interface Cliente {
   cpf: string
   nascimento: string
   tipo: 'VIP' | 'Regular' | 'Novo'
+  status: 'Ativo' | 'Inativo'
   endereco: string
   observacoes: string
   created_at: string

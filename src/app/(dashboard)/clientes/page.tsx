@@ -12,33 +12,35 @@ export default function ClientesPage() {
   const [filterTipo, setFilterTipo] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Cliente | null>(null)
-  const [form, setForm] = useState({ nome: '', telefone: '', email: '', cpf: '', nascimento: '', tipo: 'Regular', endereco: '', observacoes: '' })
+  const [filterStatus, setFilterStatus] = useState('Ativo')
+  const [form, setForm] = useState({ nome: '', telefone: '', email: '', cpf: '', nascimento: '', tipo: 'Regular', status: 'Ativo', endereco: '', observacoes: '' })
 
   const filtered = store.clientes.filter(c => {
     const matchSearch = !search || [c.nome, c.telefone, c.email].some(f => f.toLowerCase().includes(search.toLowerCase()))
     const matchTipo = !filterTipo || c.tipo === filterTipo
-    return matchSearch && matchTipo
+    const matchStatus = filterStatus === 'Todos' ? true : c.status === filterStatus
+    return matchSearch && matchTipo && matchStatus
   })
 
   function openNew() {
     setEditing(null)
-    setForm({ nome: '', telefone: '', email: '', cpf: '', nascimento: '', tipo: 'Regular', endereco: '', observacoes: '' })
+    setForm({ nome: '', telefone: '', email: '', cpf: '', nascimento: '', tipo: 'Regular', status: 'Ativo', endereco: '', observacoes: '' })
     setModalOpen(true)
   }
 
   function openEdit(c: Cliente) {
     setEditing(c)
-    setForm({ nome: c.nome, telefone: c.telefone, email: c.email, cpf: c.cpf, nascimento: c.nascimento, tipo: c.tipo, endereco: c.endereco, observacoes: c.observacoes })
+    setForm({ nome: c.nome, telefone: c.telefone, email: c.email, cpf: c.cpf, nascimento: c.nascimento, tipo: c.tipo, status: c.status || 'Ativo', endereco: c.endereco, observacoes: c.observacoes })
     setModalOpen(true)
   }
 
   async function save() {
     if (!form.nome || !form.telefone) { toast('Preencha nome e telefone', 'er'); return }
     if (editing) {
-      await store.updateCliente({ ...editing, ...form, tipo: form.tipo as Cliente['tipo'] })
+      await store.updateCliente({ ...editing, ...form, tipo: form.tipo as Cliente['tipo'], status: form.status as Cliente['status'] })
       toast('Cliente atualizado!')
     } else {
-      await store.addCliente({ ...form, tipo: form.tipo as Cliente['tipo'] })
+      await store.addCliente({ ...form, tipo: form.tipo as Cliente['tipo'], status: form.status as Cliente['status'] })
       toast('Cliente adicionado!')
     }
     setModalOpen(false)
@@ -85,6 +87,11 @@ export default function ClientesPage() {
           <option>Regular</option>
           <option>Novo</option>
         </select>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-4 py-3 glass rounded-[10px] text-sm text-tx-1 focus:outline-none cursor-pointer">
+          <option value="Todos">Todos (Ativos/Inativos)</option>
+          <option value="Ativo">Apenas Ativos</option>
+          <option value="Inativo">Apenas Inativos</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -95,15 +102,19 @@ export default function ClientesPage() {
               <tr className="border-b border-border-default bg-black/20">
                 <th className="text-left px-6 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">Cliente</th>
                 <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">Telefone</th>
-                <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 hidden md:table-cell">Email</th>
-                <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">Tipo</th>
+                <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 hidden md:table-cell">Histórico</th>
+                <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">Tipo / Status</th>
                 <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 hidden lg:table-cell">Cadastro</th>
                 <th className="text-left px-4 py-3 font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-default">
-              {filtered.map(c => (
-                <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
+              {filtered.map(c => {
+                const agnds = store.agendamentos.filter(a => a.cliente_id === c.id && a.status !== 'Cancelado')
+                const totalCortes = agnds.length
+                const lastCorte = totalCortes > 0 ? new Date(Math.max(...agnds.map(a => new Date(a.data).getTime() + 1000 * 60 * 60 * 12))).toLocaleDateString('pt-BR') : 'Nenhum'
+                return (
+                <tr key={c.id} className={`hover:bg-white/[0.02] transition-colors group ${c.status === 'Inativo' ? 'opacity-50' : ''}`}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyber-cyan/20 to-cyber-purple/20 flex items-center justify-center text-[10px] font-bold text-cyber-cyan border border-cyber-cyan/20 flex-shrink-0">
@@ -116,8 +127,14 @@ export default function ClientesPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4 font-[family-name:var(--font-jetbrains)] text-[12px] text-tx-2">{c.telefone}</td>
-                  <td className="px-4 py-4 text-tx-2 hidden md:table-cell">{c.email || '—'}</td>
+                  <td className="px-4 py-4 hidden md:table-cell">
+                    <div className="text-[11px] text-tx-2">
+                       <span className="font-bold text-cyber-cyan">{totalCortes}</span> ref. {totalCortes === 1 ? 'concluída' : 'concluídas'}
+                    </div>
+                    {totalCortes > 0 && <div className="text-[10px] text-tx-3">Último: {lastCorte}</div>}
+                  </td>
                   <td className="px-4 py-4">
+                    <div className="flex gap-2 items-center">
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
                       c.tipo === 'VIP' ? 'bg-cyber-amber/12 text-cyber-amber border border-cyber-amber/20' :
                       c.tipo === 'Novo' ? 'bg-cyber-green/12 text-cyber-green border border-cyber-green/20' :
@@ -125,6 +142,12 @@ export default function ClientesPage() {
                     }`}>
                       {c.tipo === 'VIP' && '⭐ '}{c.tipo}
                     </span>
+                    {c.status === 'Inativo' && (
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                        Inativo
+                      </span>
+                    )}
+                    </div>
                   </td>
                   <td className="px-4 py-4 font-[family-name:var(--font-jetbrains)] text-[11px] text-tx-3 hidden lg:table-cell">
                     {c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : '—'}
@@ -140,7 +163,7 @@ export default function ClientesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
               {filtered.length === 0 && (
                 <tr><td colSpan={6} className="text-center py-12 text-tx-3">Nenhum cliente encontrado</td></tr>
               )}
@@ -189,6 +212,13 @@ export default function ClientesPage() {
               <option>Regular</option>
               <option>VIP</option>
               <option>Novo</option>
+            </select>
+          </div>
+          <div>
+            <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Status</label>
+            <select value={form.status} onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
+              <option>Ativo</option>
+              <option>Inativo</option>
             </select>
           </div>
           <div className="sm:col-span-2">

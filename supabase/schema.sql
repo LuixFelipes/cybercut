@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS clientes (
   cpf TEXT,
   nascimento DATE,
   tipo TEXT CHECK (tipo IN ('VIP', 'Regular', 'Novo')) DEFAULT 'Novo',
+  status TEXT CHECK (status IN ('Ativo', 'Inativo')) DEFAULT 'Ativo',
   endereco TEXT,
   observacoes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()

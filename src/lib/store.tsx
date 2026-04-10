@@ -100,6 +100,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ...c, id: String(c.id),
         nascimento: c.nascimento || '', endereco: c.endereco || '',
         observacoes: c.observacoes || '', cpf: c.cpf || '', email: c.email || '',
+        status: (c.status as 'Ativo'|'Inativo') || 'Ativo',
       })),
       produtos: (produtos || []).map(p => ({
         ...p, id: String(p.id), preco: Number(p.preco),
@@ -122,7 +123,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // ─── CRUD: Clientes ───
   const addCliente = useCallback(async (c: Omit<Cliente, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('clientes').insert(c).select().single()
-    if (!error && data) setState(prev => ({ ...prev, clientes: [{ ...data, id: String(data.id), email: data.email||'', cpf: data.cpf||'', nascimento: data.nascimento||'', endereco: data.endereco||'', observacoes: data.observacoes||'' }, ...prev.clientes] }))
+    if (!error && data) setState(prev => ({ ...prev, clientes: [{ ...data, id: String(data.id), email: data.email||'', cpf: data.cpf||'', nascimento: data.nascimento||'', endereco: data.endereco||'', observacoes: data.observacoes||'', status: data.status||'Ativo' }, ...prev.clientes] }))
   }, [supabase])
 
   const updateCliente = useCallback(async (c: Cliente) => {
