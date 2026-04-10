@@ -3,12 +3,14 @@ import { useState } from 'react'
 import Sidebar from '@/components/sidebar'
 import Topbar from '@/components/topbar'
 import { ToastProvider } from '@/components/ui/toast'
+import AgendaReminder from '@/components/agenda-reminder'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <ToastProvider>
+      <AgendaReminder />
       <div className="min-h-screen flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

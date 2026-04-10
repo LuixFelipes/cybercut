@@ -74,7 +74,7 @@ export interface Agendamento {
   preco: number
   data: string
   hora: string
-  status: 'Confirmado' | 'Pendente' | 'Cancelado'
+  status: 'Confirmado' | 'Pendente' | 'Cancelado' | 'Realizado'
   observacoes: string
   created_at: string
 }

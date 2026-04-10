@@ -35,6 +35,7 @@ export default function AgendaPage() {
   const [form, setForm] = useState({
     cliente_id: '', barbeiro_id: '', servico_id: '', data: '', hora: '', status: 'Confirmado', observacoes: ''
   })
+  const [pagamento, setPagamento] = useState('Pix')
 
   const todayStr = new Date().toISOString().split('T')[0]
   const nowH = new Date().getHours()
@@ -66,6 +67,7 @@ export default function AgendaPage() {
       data: date || todayStr, hora: time || '',
       status: 'Confirmado', observacoes: ''
     })
+    setPagamento('Pix')
     setModalOpen(true)
   }
 
@@ -98,7 +100,13 @@ export default function AgendaPage() {
 
     if (editing) {
       await store.updateAgendamento({ ...obj, id: editing.id, created_at: editing.created_at })
-      toast('Agendamento atualizado!')
+      if (form.status === 'Realizado' && editing.status !== 'Realizado') {
+        const b = barbers.find(x => x.id === obj.barbeiro_id)
+        await store.addTransacao({ descricao: `Serviço: ${sv.nome} (${cl.nome})`, valor: sv.preco, data: form.data, categoria: 'Serviço', tipo: 'entrada', pagamento: pagamento, observacoes: `Barbeiro: ${b?.nome || '-'}` })
+        toast('Concluído e lançamento no Caixa enviado!')
+      } else {
+        toast('Agendamento atualizado!')
+      }
     } else {
       await store.addAgendamento(obj)
       toast('Agendamento criado!')
@@ -106,7 +114,10 @@ export default function AgendaPage() {
     setModalOpen(false)
   }
 
-  const evColorClass = (cor: string) => `ev-${cor === 'cyan' ? 'corte' : cor === 'green' ? 'barba' : cor === 'purple' ? 'combo' : cor === 'amber' ? 'tratamento' : 'outro'}`
+  const evColorClass = (cor: string, st: string) => {
+    if (st === 'Realizado') return 'bg-tx-3/10 text-tx-3 border border-tx-3/20 grayscale hover:grayscale-0'
+    return `ev-${cor === 'cyan' ? 'corte' : cor === 'green' ? 'barba' : cor === 'purple' ? 'combo' : cor === 'amber' ? 'tratamento' : 'outro'}`
+  }
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -164,7 +175,7 @@ export default function AgendaPage() {
         </div>
 
         {/* Body */}
-        <div className="max-h-[calc(100vh-420px)] overflow-y-auto">
+        <div className="h-[600px] md:h-[calc(100vh-250px)] overflow-y-auto">
           <div className="grid grid-cols-[60px_repeat(7,1fr)] relative">
             {/* Time column */}
             <div className="border-r border-border-default">
@@ -202,12 +213,14 @@ export default function AgendaPage() {
                     return (
                       <div
                         key={ev.id}
-                        className={`absolute left-[3px] right-[3px] rounded-md px-2 py-1 cursor-pointer z-[3] transition-all hover:scale-[1.02] hover:z-[6] hover:shadow-lg overflow-hidden ${evColorClass(ev.servico_cor)}`}
+                        className={`absolute left-[3px] right-[3px] rounded-md px-2 py-1 cursor-pointer z-[3] transition-all hover:scale-[1.02] hover:z-[6] hover:shadow-lg overflow-hidden ${evColorClass(ev.servico_cor, ev.status)}`}
                         style={{ top: `${topPx}px`, height: `${Math.max(hPx, 24)}px` }}
                         onClick={(e) => { e.stopPropagation(); openEdit(ev) }}
                         title={`${ev.servico_nome} — ${ev.cliente_nome}\n${ev.hora} (${ev.duracao_min}min)\nBarbeiro: ${ev.barbeiro_nome}`}
                       >
-                        <div className="text-[11px] font-bold truncate">{ev.servico_nome}</div>
+                        <div className="text-[11px] font-bold truncate">
+                          {ev.status === 'Realizado' && <span className="mr-1">✅</span>}{ev.servico_nome}
+                        </div>
                         {hPx >= 36 && (
                           <div className="font-[family-name:var(--font-jetbrains)] text-[9px] opacity-80 truncate">
                             {ev.cliente_nome} · {ev.hora}
@@ -284,6 +297,7 @@ export default function AgendaPage() {
             <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Status</label>
             <select value={form.status} onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
               <option>Confirmado</option>
+              <option>Realizado</option>
               <option>Pendente</option>
               <option>Cancelado</option>
             </select>
@@ -307,6 +321,26 @@ export default function AgendaPage() {
             <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Observações</label>
             <textarea value={form.observacoes} onChange={e => setForm(prev => ({ ...prev, observacoes: e.target.value }))} placeholder="Notas sobre o agendamento..." className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 placeholder:text-tx-3 focus:outline-none min-h-[56px] resize-y" />
           </div>
+
+          {editing && editing.status !== 'Realizado' && (
+            <div className="sm:col-span-2 p-4 mt-2 border border-cyber-green/30 bg-cyber-green/[0.03] rounded-[8px]">
+              <label className="flex items-center gap-3 font-bold text-cyber-green text-sm cursor-pointer mb-1">
+                <input type="checkbox" checked={form.status === 'Realizado'} onChange={e => setForm(prev => ({ ...prev, status: e.target.checked ? 'Realizado' : editing.status }))} className="w-4 h-4 accent-cyber-green cursor-pointer" />
+                ✅ Marcar Atendimento como Realizado
+              </label>
+              {form.status === 'Realizado' && (
+                <div className="mt-3 pl-7 animate-fade-in fade-in-0 duration-300">
+                  <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Registrar no Caixa Automático (Pagamento)</label>
+                  <select value={pagamento} onChange={e => setPagamento(e.target.value)} className="w-[200px] px-3 py-2 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
+                    <option>Pix</option>
+                    <option>Cartão de Crédito</option>
+                    <option>Cartão de Débito</option>
+                    <option>Dinheiro</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Modal>
     </div>
