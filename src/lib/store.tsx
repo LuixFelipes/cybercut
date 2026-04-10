@@ -160,7 +160,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // ─── CRUD: Transacoes ───
   const addTransacao = useCallback(async (t: Omit<Transacao, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('transacoes').insert(t).select().single()
-    if (!error && data) setState(prev => ({ ...prev, transacoes: [{ ...data, id: String(data.id), valor: Number(data.valor), observacoes: data.observacoes||'' }, ...prev.transacoes] }))
+    if (error) { console.error('Erro addTransacao:', error) }
+    if (!error && data) setState(prev => ({ ...prev, transacoes: [{ ...data, id: String(data.id), valor: Number(data.valor), observacoes: data.observacoes||'', created_at: data.created_at || new Date().toISOString() }, ...prev.transacoes] }))
   }, [supabase])
 
   const updateTransacao = useCallback(async (t: Transacao) => {

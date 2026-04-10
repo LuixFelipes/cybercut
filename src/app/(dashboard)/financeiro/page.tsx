@@ -28,7 +28,11 @@ export default function FinanceiroPage() {
     const ms = !search || t.descricao.toLowerCase().includes(search.toLowerCase())
     const mt = !filterTipo || t.tipo === filterTipo
     return ms && mt
-  }).sort((a, b) => b.data.localeCompare(a.data))
+  }).sort((a, b) => {
+    const tA = new Date(a.created_at || a.data || 0).getTime() || 0
+    const tB = new Date(b.created_at || b.data || 0).getTime() || 0
+    return tB - tA
+  })
 
   function openNew(tipo: string) {
     setEditing(null)
