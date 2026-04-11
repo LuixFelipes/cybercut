@@ -338,14 +338,22 @@ export default function AgendaPage() {
                 ✅ Marcar Atendimento como Realizado
               </label>
               {form.status === 'Realizado' && (
-                <div className="mt-3 pl-7 animate-fade-in fade-in-0 duration-300">
-                  <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Registrar no Caixa Automático (Pagamento)</label>
-                  <select value={pagamento} onChange={e => setPagamento(e.target.value)} className="w-[200px] px-3 py-2 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
-                    <option>Pix</option>
-                    <option>Cartão de Crédito</option>
-                    <option>Cartão de Débito</option>
-                    <option>Dinheiro</option>
-                  </select>
+                <div className="mt-4 pl-7 animate-fade-in fade-in-0 duration-300 flex flex-col sm:flex-row items-start sm:items-end gap-3">
+                  <div className="flex-1">
+                    <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Meio de Pagamento</label>
+                    <select value={pagamento} onChange={e => setPagamento(e.target.value)} className="w-full sm:w-[200px] px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer border border-cyber-green/20">
+                      <option>Pix</option>
+                      <option>Cartão de Crédito</option>
+                      <option>Cartão de Débito</option>
+                      <option>Dinheiro</option>
+                    </select>
+                  </div>
+                  <button 
+                    onClick={save} 
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-[8px] bg-cyber-green/20 text-cyber-green border border-cyber-green/40 text-sm font-bold hover:bg-cyber-green/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(50,250,100,0.1)] uppercase tracking-wide"
+                  >
+                    🤑 Finalizar Atendimento
+                  </button>
                 </div>
               )}
             </div>
