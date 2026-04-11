@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [nome, setNome] = useState('')
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot_password'>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -66,6 +67,12 @@ export default function LoginPage() {
       return
     }
 
+    if (password !== confirmPassword) {
+      setError('As senhas não conferem. Verifique e repita corretamente.')
+      setLoading(false)
+      return
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -80,6 +87,24 @@ export default function LoginPage() {
       setSuccess('Conta criada! Faça login para continuar.')
       setMode('login')
       setPassword('')
+    }
+    setLoading(false)
+  }
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setSuccess('')
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess('Instruções de redefinição foram enviadas para seu e-mail (se ele existir no banco).')
     }
     setLoading(false)
   }
@@ -155,28 +180,36 @@ export default function LoginPage() {
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyber-cyan/40 to-transparent" />
 
           {/* Mode tabs */}
-          <div className="flex mb-7 bg-black/30 rounded-[10px] p-1 gap-1">
-            <button
-              onClick={() => { setMode('login'); setError(''); setSuccess('') }}
-              className={`flex-1 py-2.5 rounded-[8px] text-[12px] font-bold tracking-[1px] uppercase transition-all duration-300 ${
-                mode === 'login'
-                ? 'bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 shadow-[0_0_12px_rgba(5,217,232,0.1)]'
-                : 'text-tx-3 hover:text-tx-2'
-              }`}
-            >
-              ⬡ Entrar
-            </button>
-            <button
-              onClick={() => { setMode('register'); setError(''); setSuccess('') }}
-              className={`flex-1 py-2.5 rounded-[8px] text-[12px] font-bold tracking-[1px] uppercase transition-all duration-300 ${
-                mode === 'register'
-                ? 'bg-cyber-purple/10 text-cyber-purple border border-cyber-purple/20 shadow-[0_0_12px_rgba(168,85,247,0.1)]'
-                : 'text-tx-3 hover:text-tx-2'
-              }`}
-            >
-              ＋ Registrar
-            </button>
-          </div>
+          {mode !== 'forgot_password' && (
+            <div className="flex mb-7 bg-black/30 rounded-[10px] p-1 gap-1">
+              <button
+                onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+                className={`flex-1 py-2.5 rounded-[8px] text-[12px] font-bold tracking-[1px] uppercase transition-all duration-300 ${
+                  mode === 'login'
+                  ? 'bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 shadow-[0_0_12px_rgba(5,217,232,0.1)]'
+                  : 'text-tx-3 hover:text-tx-2'
+                }`}
+              >
+                ⬡ Entrar
+              </button>
+              <button
+                onClick={() => { setMode('register'); setError(''); setSuccess('') }}
+                className={`flex-1 py-2.5 rounded-[8px] text-[12px] font-bold tracking-[1px] uppercase transition-all duration-300 ${
+                  mode === 'register'
+                  ? 'bg-cyber-purple/10 text-cyber-purple border border-cyber-purple/20 shadow-[0_0_12px_rgba(168,85,247,0.1)]'
+                  : 'text-tx-3 hover:text-tx-2'
+                }`}
+              >
+                ＋ Registrar
+              </button>
+            </div>
+          )}
+          {mode === 'forgot_password' && (
+            <div className="mb-7 text-center">
+              <h2 className="text-xl font-bold text-cyber-cyan tracking-[2px]">Recuperar Acesso</h2>
+              <p className="text-tx-3 text-xs mt-2">Enviaremos um link de reset para seu e-mail.</p>
+            </div>
+          )}
 
           {/* Error / Success alerts */}
           {error && (
@@ -191,7 +224,7 @@ export default function LoginPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-4">
+          <form onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleForgot} className="space-y-4">
             {mode === 'register' && (
               <div className="animate-fade-up">
                 <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">
@@ -223,28 +256,57 @@ export default function LoginPage() {
               />
             </div>
 
-            <div>
-              <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">
-                Senha
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                className="w-full px-4 py-3.5 glass rounded-[10px] text-sm text-tx-1 placeholder:text-tx-3 focus:outline-none focus:border-cyber-cyan/30 focus:shadow-[0_0_20px_rgba(5,217,232,0.05)] transition-all"
-              />
-            </div>
+            {mode !== 'forgot_password' && (
+              <div className="animate-fade-up">
+                <div className="flex items-center justify-between">
+                  <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">
+                    Senha
+                  </label>
+                  {mode === 'login' && (
+                    <button type="button" onClick={() => { setMode('forgot_password'); setError(''); setSuccess('') }} className="text-[10px] text-cyber-cyan hover:underline -translate-y-[2px]">
+                      Esqueci a senha
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  className="w-full px-4 py-3.5 glass rounded-[10px] text-sm text-tx-1 placeholder:text-tx-3 focus:outline-none focus:border-cyber-cyan/30 focus:shadow-[0_0_20px_rgba(5,217,232,0.05)] transition-all"
+                />
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div className="animate-fade-up">
+                <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">
+                  Confirme a Senha
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  className="w-full px-4 py-3.5 glass rounded-[10px] text-sm text-tx-1 placeholder:text-tx-3 focus:outline-none focus:border-cyber-cyan/30 focus:shadow-[0_0_20px_rgba(5,217,232,0.05)] transition-all"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3.5 rounded-[10px] text-sm font-bold tracking-[1px] uppercase transition-all duration-300 relative overflow-hidden group ${
+              className={`w-full py-3.5 rounded-[10px] text-sm font-bold tracking-[1px] uppercase transition-all duration-300 relative overflow-hidden group mt-6 ${
                 mode === 'login'
                 ? 'bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 hover:bg-cyber-cyan/20 hover:shadow-[0_0_30px_rgba(5,217,232,0.15)]'
+                : mode === 'forgot_password'
+                ? 'bg-cyber-amber/10 text-cyber-amber border border-cyber-amber/20 hover:bg-cyber-amber/20 hover:shadow-[0_0_30px_rgba(251,191,36,0.15)]'
                 : 'bg-cyber-purple/10 text-cyber-purple border border-cyber-purple/20 hover:bg-cyber-purple/20 hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -256,6 +318,8 @@ export default function LoginPage() {
                   </>
                 ) : mode === 'login' ? (
                   <>🔐 Acessar Sistema</>
+                ) : mode === 'forgot_password' ? (
+                  <>🔑 Enviar Link</>
                 ) : (
                   <>🚀 Criar Conta</>
                 )}
@@ -267,15 +331,27 @@ export default function LoginPage() {
 
           {/* Footer text */}
           <div className="mt-6 text-center">
-            <p className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">
-              {mode === 'login' ? 'Não tem conta?' : 'Já tem conta?'}{' '}
-              <button
-                onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setSuccess('') }}
-                className={`${mode === 'login' ? 'text-cyber-cyan' : 'text-cyber-purple'} hover:underline font-bold`}
-              >
-                {mode === 'login' ? 'Registre-se' : 'Fazer Login'}
-              </button>
-            </p>
+            {mode === 'forgot_password' ? (
+              <p className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">
+                Lembrou sua senha?{' '}
+                <button
+                  onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+                  className="text-cyber-cyan hover:underline font-bold"
+                >
+                  Voltar ao Login
+                </button>
+              </p>
+            ) : (
+              <p className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3">
+                {mode === 'login' ? 'Não tem conta?' : 'Já tem conta?'}{' '}
+                <button
+                  onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setSuccess('') }}
+                  className={`${mode === 'login' ? 'text-cyber-cyan' : 'text-cyber-purple'} hover:underline font-bold`}
+                >
+                  {mode === 'login' ? 'Registre-se' : 'Fazer Login'}
+                </button>
+              </p>
+            )}
           </div>
         </div>
 
