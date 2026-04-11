@@ -263,12 +263,30 @@ export default function AgendaPage() {
         onClose={() => setModalOpen(false)}
         title={editing ? 'Editar Agendamento' : 'Novo Agendamento'}
         footer={
-          <>
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg text-sm text-tx-3 hover:text-tx-1 transition-colors">Cancelar</button>
-            <button onClick={save} className="px-5 py-2 rounded-lg bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 text-sm font-bold hover:bg-cyber-cyan/20 transition-all">
-              💾 Salvar Agendamento
-            </button>
-          </>
+          <div className="flex w-full items-center justify-between gap-2">
+            <div>
+              {editing && editing.status !== 'Realizado' && editing.status !== 'Cancelado' && (
+                <button 
+                  onClick={async () => {
+                    if (confirm('Deseja realmente cancelar este agendamento?')) {
+                      await store.updateAgendamento({ ...editing, status: 'Cancelado' })
+                      toast('Agendamento Cancelado!', 'info')
+                      setModalOpen(false)
+                    }
+                  }} 
+                  className="px-3 py-2 rounded-[8px] text-[12px] text-cyber-pink border border-cyber-pink/20 hover:bg-cyber-pink/10 transition-colors uppercase font-bold tracking-wider"
+                >
+                  🚫 Cancelar Serviço
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg text-sm text-tx-3 hover:text-tx-1 transition-colors">Fechar</button>
+              <button onClick={save} className="px-5 py-2 rounded-lg bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 text-sm font-bold hover:bg-cyber-cyan/20 transition-all">
+                {editing ? '💾 Salvar Reagendamento' : '💾 Salvar Agendamento'}
+              </button>
+            </div>
+          </div>
         }
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -286,20 +304,11 @@ export default function AgendaPage() {
               {barbers.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
             </select>
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Serviço *</label>
             <select value={form.servico_id} onChange={e => setForm(prev => ({ ...prev, servico_id: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
               <option value="">Selecione...</option>
               {store.servicos.map(s => <option key={s.id} value={s.id}>{s.nome} — R${s.preco} ({s.duracao_min}min)</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="font-[family-name:var(--font-jetbrains)] text-[9px] tracking-[2px] uppercase text-tx-3 mb-1.5 block">Status</label>
-            <select value={form.status} onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))} className="w-full px-4 py-2.5 glass rounded-[8px] text-sm text-tx-1 focus:outline-none cursor-pointer">
-              <option>Confirmado</option>
-              <option>Realizado</option>
-              <option>Pendente</option>
-              <option>Cancelado</option>
             </select>
           </div>
           <div>
